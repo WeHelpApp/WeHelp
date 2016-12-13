@@ -1,7 +1,6 @@
 package com.wehelp.wehelp;
 
 import android.app.Application;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,12 +9,14 @@ import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.wehelp.wehelp.adapters.RequirementCheckboxAdapter;
 import com.wehelp.wehelp.classes.Event;
 import com.wehelp.wehelp.classes.EventRequirement;
@@ -29,16 +30,19 @@ import java.util.ArrayList;
 
 import javax.inject.Inject;
 
-public class AbandonEventActivity extends AppCompatActivity {
+public class MyEventDetailActivity extends AppCompatActivity {
 
     @Inject
     EventController eventController;
     @Inject
     Application application;
-    RelativeLayout loadingPanel;
+
     public Event event;
+    RelativeLayout loadingPanel;
     boolean userIsParticipating;
     int userId;
+
+
     public ArrayList<EventRequirement> checkedRequirementList;
 
     @Override
@@ -46,63 +50,79 @@ public class AbandonEventActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         ((WeHelpApp) getApplication()).getNetComponent().inject(this);
         userId = ((WeHelpApp)application).getUser().getId();
-        setContentView(R.layout.activity_abandon_event);
+        setContentView(R.layout.activity_my_event_detail);
 
-        setTitle("Detalhes do evento");
-        this.event = (Event)getIntent().getSerializableExtra("event");
+        setTitle("Meu evento");
+        event = (Event)getIntent().getSerializableExtra("event");
+
+        Gson gson = new Gson();
+        String eventToString = gson.toJson(event);
+
+        System.out.println("Detalhe do evento: "+eventToString);
+        System.out.println("PARTICIPANTES: "+event.getParticipantes());
+
+        for(int i = 0; i < event.getParticipantes().size(); i++) {
+            if(event.getParticipantes().get(i).getId() == userId) {
+                userIsParticipating = true;
+            }
+        }
+
         TextView eventName = (TextView) findViewById(R.id.help_event_name);
         TextView eventDescription = (TextView) findViewById(R.id.help_event_description);
         TextView eventDate = (TextView) findViewById(R.id.event_help_date);
         TextView eventAddress = (TextView) findViewById(R.id.event_help_address);
         TextView eventParticipants = (TextView) findViewById(R.id.event_help_participants);
         TextView txtParticipating = (TextView) findViewById(R.id.txt_participating);
-        loadingPanel = (RelativeLayout) findViewById(R.id.loadingPanel);
-        assert loadingPanel != null;
-        loadingPanel.setVisibility(View.GONE);
-
-        Button helpRegisterButton = (Button)findViewById(R.id.btn_register_help);
-        Button abandonButton = (Button)findViewById(R.id.btn_register_abandon);
-        final ListView lvRequirementsCheckbox = (ListView)findViewById(R.id.listview_requirements_checkbox);
-        final ArrayList<EventRequirement> requirementList = new ArrayList<>();
-        checkedRequirementList = new ArrayList<>();
-        event.setParticipating(true);
-        RequirementCheckboxAdapter checkboxAdapter = new RequirementCheckboxAdapter(this,R.layout.row_checkbox_requirement,requirementList, "AbandonEvent", event);
-
+        TextView txtEmailResponsable = (TextView)findViewById(R.id.txt_email_participants);
+        LinearLayout emailsLayout = (LinearLayout)findViewById(R.id.layout_email_participants);
+        Button deleteBtn = (Button)findViewById(R.id.btn_register_help);
 
         String address = event.getCidade()+" / "+event.getRua()+" - "+event.getNumero()+", "+event.getComplemento();
         String date = new SimpleDateFormat("dd/MM/yyyy / HH:mm").format(event.getDataInicio());
+
+        loadingPanel = (RelativeLayout) findViewById(R.id.loadingPanel);
+        checkedRequirementList = new ArrayList<>();
+
+        final ListView lvRequirementsCheckbox = (ListView)findViewById(R.id.listview_requirements_checkbox);
+        final ArrayList<EventRequirement> requirementList = new ArrayList<>();
+
+        RequirementCheckboxAdapter checkboxAdapter = new RequirementCheckboxAdapter(this,R.layout.row_checkbox_requirement,requirementList, "HelpEvent", event);
+
+        userIsParticipating = false;
 
         assert eventName != null;
         assert eventDescription != null;
         assert eventAddress != null;
         assert eventDate != null;
         assert eventParticipants != null;
-//        assert lvRequirementsCheckbox != null;
+
+        assert lvRequirementsCheckbox != null;
+
+        assert txtParticipating != null;
+        assert loadingPanel != null;
+
         eventName.setText(event.getNome());
         eventDescription.setText(event.getDescricao());
         eventAddress.setText(address);
         eventDate.setText(date);
-        abandonButton.setVisibility(View.GONE);
+        txtEmailResponsable.setVisibility(View.GONE);
+        emailsLayout.setVisibility(View.GONE);
+
         txtParticipating.setVisibility(View.GONE);
+        loadingPanel.setVisibility(View.GONE);
 
-        TextView txtEmailResponsable = (TextView)findViewById(R.id.txt_email_responsable);
-        String creatorEmail = event.getUsuario().getEmail();
-        txtEmailResponsable.setText(Html.fromHtml("<a href=\"mailto:"+creatorEmail+"\">"+creatorEmail+"</a>"));
-        txtEmailResponsable.setMovementMethod(LinkMovementMethod.getInstance());
-
-
-        if(event.getNumeroParticipantes() > 0) {
-            eventParticipants.setText(event.getNumeroParticipantes()+" pessoas irão participar deste evento.");
+        if(event.getParticipantes().size() > 0) {
+            eventParticipants.setText(event.getParticipantes().size()+" pessoas irão participar deste evento.");
         }
-        if(event.getNumeroParticipantes() == 1) {
-            eventParticipants.setText(event.getNumeroParticipantes()+" pessoa irá participar deste evento.");
+        if(event.getParticipantes().size() == 1) {
+            eventParticipants.setText(event.getParticipantes().size()+" pessoa irá participar deste evento.");
         }
-        if(event.getNumeroParticipantes() == 0){
+        if(event.getParticipantes().size() == 0){
             eventParticipants.setText("Não há nenhuma pessoa participando no momento. Seja a primeira!");
         }
 
-        lvRequirementsCheckbox.setAdapter(checkboxAdapter);
         requirementList.addAll(event.getRequisitos());
+        lvRequirementsCheckbox.setAdapter(checkboxAdapter);
         checkboxAdapter.notifyDataSetChanged();
 
         int userRequirementId;
@@ -112,56 +132,39 @@ public class AbandonEventActivity extends AppCompatActivity {
                 if(userId == userRequirementId) {
                     userIsParticipating = true;
                     event.setParticipating(true);
-                    helpRegisterButton.setText("Atualizar participação");
-                    abandonButton.setVisibility(View.VISIBLE);
                     txtParticipating.setVisibility(View.VISIBLE);
                 }
             }
         }
 
-        for( int z = 0; z < event.getParticipantes().size(); z++) {
-            if(event.getParticipantes().get(z).getId() == userId) {
-                event.setParticipating(true);
-                helpRegisterButton.setText("Atualizar participação");
-                abandonButton.setVisibility(View.VISIBLE);
-                txtParticipating.setVisibility(View.VISIBLE);
+        if(event.getParticipantes().size() > 0) {
+            txtEmailResponsable.setVisibility(View.VISIBLE);
+            emailsLayout.setVisibility(View.VISIBLE);
+            for( int z = 0; z < event.getParticipantes().size(); z++) {
+                TextView tvEmail = new TextView(this);
+                String creatorEmail = event.getParticipantes().get(z).getEmail();
+                tvEmail.setText(Html.fromHtml("<a href=\"mailto:"+creatorEmail+"\">"+creatorEmail+"</a>"));
+                tvEmail.setMovementMethod(LinkMovementMethod.getInstance());
+                emailsLayout.addView(tvEmail);
             }
         }
 
-
         setListViewHeightBasedOnChildren(lvRequirementsCheckbox);
 
-        assert helpRegisterButton != null;
-        abandonButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                loadingPanel.setVisibility(View.VISIBLE);
-                checkedRequirementList.clear();
-                for(int i = 0; i< requirementList.size(); i++) {
-                    if(requirementList.get(i).isSelected()) {
-                        checkedRequirementList.add(requirementList.get(i));
-                    }
-                }
-                new AbandonEventTask().execute();
-            }
-        });
-
-        helpRegisterButton.setOnClickListener(new View.OnClickListener() {
+        deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 checkedRequirementList = new ArrayList<EventRequirement>();
                 for(int i = 0; i < requirementList.size(); i++) {
                     if(requirementList.get(i).isSelected()) {
                         checkedRequirementList.add(requirementList.get(i));
-                        System.out.println("CHECKED ITEM: "+requirementList.get(i).getDescricao().toString());
                     }
                 }
-                new ParticipateEventsTask().execute();
+                new DeleteEventTask().execute();
             }
         });
 
     }
-
 
     private void setListViewHeightBasedOnChildren(ListView listView) {
         ListAdapter listAdapter = listView.getAdapter();
@@ -182,46 +185,8 @@ public class AbandonEventActivity extends AppCompatActivity {
                 + (listView.getDividerHeight() * (listAdapter.getCount() - 1));
         listView.setLayoutParams(params);
         listView.requestLayout();
+
     }
-
-
-    private class ParticipateEventsTask extends AsyncTask<Void, Void, Boolean> {
-
-        @Override
-        protected void onPreExecute() {
-            loadingPanel.setVisibility(View.VISIBLE);
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... params) {
-
-            try {
-                eventController.addUser(event,((WeHelpApp)application).getUser(), checkedRequirementList);
-                while (!eventController.addUserOk && !eventController.errorService){}
-                if (eventController.errorService) {
-                    return false;
-                } else {
-                    return true;
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-                return false;
-            }
-
-        }
-
-
-        protected void onPostExecute(Boolean retorno) {
-            if (!retorno) {
-                Toast.makeText(getApplicationContext(), eventController.errorMessages.toString(), Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(getApplicationContext(), "Você está participando do evento!", Toast.LENGTH_LONG).show();
-                finish();
-            }
-            loadingPanel.setVisibility(View.GONE);
-        }
-    }
-
 
     private class AbandonEventTask extends AsyncTask<Void, Void, Boolean> {
 
@@ -256,6 +221,41 @@ public class AbandonEventActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(getApplicationContext(), "Você desistiu de participar do evento", Toast.LENGTH_LONG).show();
                 loadingPanel.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private class DeleteEventTask extends AsyncTask<Void, Void, Boolean> {
+
+        @Override
+        protected void onPreExecute() {
+            // loader
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+
+            try {
+                eventController.deleteEvent(event);
+                while (!eventController.errorService){}
+                if (eventController.errorService) {
+                    return false;
+                } else {
+                    return true;
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+        }
+
+        protected void onPostExecute(Boolean retorno) {
+            if (!retorno) {
+                Toast.makeText(getApplicationContext(), eventController.errorMessages.toString(), Toast.LENGTH_LONG).show();
+            } else {
+                finish();
+                Toast.makeText(getApplicationContext(), "Evento deletado com sucesso!", Toast.LENGTH_LONG).show();
             }
         }
     }

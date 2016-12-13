@@ -4,6 +4,8 @@ import android.app.Application;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -15,6 +17,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.vision.text.Text;
 import com.google.gson.Gson;
 import com.wehelp.wehelp.adapters.RequirementCheckboxAdapter;
 import com.wehelp.wehelp.classes.Event;
@@ -72,8 +75,13 @@ public class HelpEventActivity extends AppCompatActivity {
         TextView eventAddress = (TextView) findViewById(R.id.event_help_address);
         TextView eventParticipants = (TextView) findViewById(R.id.event_help_participants);
         TextView txtParticipating = (TextView) findViewById(R.id.txt_participating);
+        TextView txtEmailResponsable = (TextView)findViewById(R.id.txt_email_responsable);
         Button helpRegisterButton = (Button)findViewById(R.id.btn_register_help);
         Button abandonButton = (Button)findViewById(R.id.btn_register_abandon);
+        
+        String creatorEmail = event.getUsuario().getEmail();
+        txtEmailResponsable.setText(Html.fromHtml("<a href=\"mailto:"+creatorEmail+"\">"+creatorEmail+"</a>"));
+        txtEmailResponsable.setMovementMethod(LinkMovementMethod.getInstance());
 
         String address = event.getCidade()+" / "+event.getRua()+" - "+event.getNumero()+", "+event.getComplemento();
         String date = new SimpleDateFormat("dd/MM/yyyy / HH:mm").format(event.getDataInicio());
@@ -103,17 +111,20 @@ public class HelpEventActivity extends AppCompatActivity {
         eventDescription.setText(event.getDescricao());
         eventAddress.setText(address);
         eventDate.setText(date);
+
         abandonButton.setVisibility(View.GONE);
         txtParticipating.setVisibility(View.GONE);
         loadingPanel.setVisibility(View.GONE);
 
-        if(event.getNumeroParticipantes() > 0) {
-            eventParticipants.setText(event.getNumeroParticipantes()+" pessoas irão participar deste evento.");
+
+
+        if(event.getParticipantes().size() > 0) {
+            eventParticipants.setText(event.getParticipantes().size()+" pessoas irão participar deste evento.");
         }
-        if(event.getNumeroParticipantes() == 1) {
-            eventParticipants.setText(event.getNumeroParticipantes()+" pessoa irá participar deste evento.");
+        if(event.getParticipantes().size() == 1) {
+            eventParticipants.setText(event.getParticipantes().size()+" pessoa irá participar deste evento.");
         }
-        if(event.getNumeroParticipantes() == 0){
+        if(event.getParticipantes().size() == 0){
             eventParticipants.setText("Não há nenhuma pessoa participando no momento. Seja a primeira!");
         }
 

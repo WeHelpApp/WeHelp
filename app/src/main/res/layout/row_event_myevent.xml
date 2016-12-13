@@ -96,6 +96,17 @@
                 android:padding="15dp"/>
 
 
+            <TextView
+                android:text="Email dos participantes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/txt_email_participants" />
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/email_participants"></LinearLayout>
 
             <TextView
                 android:text="Numero de participantes"
@@ -140,7 +151,7 @@
                 <Button
                     android:layout_width="wrap_content"
                     android:layout_height="37dp"
-                    android:text="CANCELAR EVENTO"
+                    android:text="MAIS DETALHES"
                     android:id="@+id/btn_abandon"
                     android:layout_gravity="center_horizontal|right"
                     android:background="@color/colorPrimary"
